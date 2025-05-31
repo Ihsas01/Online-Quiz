@@ -1,48 +1,42 @@
-# Online Quiz Platform
-
 A modern web-based quiz platform that allows users to take interactive quizzes and test their knowledge.
 
-## Features
+## Website Features
 
-- Interactive quiz interface
-- Multiple choice questions
-- Real-time feedback
-- User-friendly design
-- Responsive layout
+- Interactive quiz interface with smooth animations
+- Multiple choice questions with immediate feedback
+- User-friendly design with intuitive navigation
+- Responsive layout that works on all devices
+- Clean and modern UI design
+- Easy-to-use interface for both beginners and experienced users
 
-## Project Structure
+## Website Pages
 
-```
-Online-Quiz/
-├── index.html          # Main quiz interface
-├── getstarted.html     # Getting started page
-└── images/            # Project images and assets
-```
+- **Home Page** (`index.html`): The main quiz interface where users can take quizzes
+- **Getting Started** (`getstarted.html`): A guide page with instructions on how to use the platform
 
-## Getting Started
+## Website Technologies
 
-1. Clone the repository
-2. Open `index.html` in your web browser to start using the quiz platform
-3. Navigate to `getstarted.html` for instructions on how to use the platform
+- **Frontend**: HTML5, CSS3, JavaScript
+- **Design**: Modern and responsive web design
+- **Compatibility**: Works on all modern web browsers
 
-## Technologies Used
+## How to Use the Website
 
-- HTML5
-- CSS3
-- JavaScript
+1. Open the website in your preferred web browser
+2. Start with the Getting Started page to learn how to use the platform
+3. Navigate to the main quiz interface to begin taking quizzes
+4. Follow the on-screen instructions to complete quizzes
 
-## Contributing
+## Browser Support
 
-Feel free to contribute to this project by:
-1. Forking the repository
-2. Creating a new branch
-3. Making your changes
-4. Submitting a pull request
+- Google Chrome (recommended)
+- Mozilla Firefox
+- Microsoft Edge
+- Safari
+- Opera
 
-## License
+## Website Requirements
 
-This project is open source and available under the MIT License.
-
-## Contact
-
-For any questions or suggestions, please open an issue in the repository. 
+- Modern web browser with JavaScript enabled
+- Internet connection for loading the website
+- Screen resolution of 1024x768 or higher for optimal viewing
