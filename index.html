@@ -1,0 +1,1299 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizMaster Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            transition: background-color 0.5s, color 0.5s;
+            overflow-x: hidden;
+        }
+        .dark body {
+            background: linear-gradient(135deg, #1e293b, #334155);
+        }
+        .option-label {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .option-label:hover {
+            background-color: #e3f2fd;
+            border-color: #1976d2;
+            transform: translateX(5px);
+        }
+        .dark .option-label:hover {
+            background-color: #475569;
+            border-color: #60a5fa;
+        }
+        .selected {
+            background-color: #bbdefb;
+            border-left: 5px solid #1976d2;
+            transform: scale(1.02);
+        }
+        .dark .selected {
+            background-color: #64748b;
+            border-color: #60a5fa;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #60a5fa;
+            transform: translateY(-2px);
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #60a5fa, #3b82f6);
+            border-radius: 2px;
+        }
+        .category-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .category-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: 0.5s;
+        }
+        .category-btn:hover::after {
+            left: 100%;
+        }
+        .category-btn:hover {
+            transform: scale(1.1) rotate(2deg);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            transition: width 0.5s ease;
+        }
+        .dashboard-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        .warning-modal {
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .badge {
+            animation: pulse 1.5s infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        .badge::before {
+            content: '★';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            font-size: 20px;
+            opacity: 0.3;
+            animation: sparkle 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        @keyframes sparkle {
+            0% { transform: translate(0, 0); opacity: 0.3; }
+            50% { transform: translate(20px, 20px); opacity: 0.8; }
+            100% { transform: translate(0, 0); opacity: 0.3; }
+        }
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .streak-flame {
+            animation: flame 1s infinite;
+        }
+        @keyframes flame {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 font-sans min-h-screen flex flex-col">
+    <!-- Particle Background -->
+    <div id="particles-js"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="bg-blue-900 dark:bg-gray-900 text-white p-4 shadow-xl sticky top-0 z-20">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="text-3xl font-extrabold tracking-tight">QuizMaster Pro</div>
+            <div class="flex space-x-8 items-center">
+                <a href="#home" class="nav-link text-lg hover:text-blue-300 transition" onclick="showSection('home')">Home</a>
+                <a href="#exam" class="nav-link text-lg hover:text-blue-300 transition" onclick="showSection('exam')">Exam</a>
+                <a href="#about" class="nav-link text-lg hover:text-blue-300 transition" onclick="showSection('about')">About</a>
+                <a href="#contact" class="nav-link text-lg hover:text-blue-300 transition" onclick="showSection('contact')">Contact</a>
+                <div id="user-profile" class="hidden text-sm flex items-center gap-2">
+                    <span id="streak-display" class="text-yellow-400 flex items-center gap-1 hidden">
+                        <svg class="w-5 h-5 streak-flame" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2c-1.5 0-2.8.9-3.5 2.2-.7 1.3-.9 2.8-.5 4.2.2.7.6 1.3 1.2 1.8.6.5 1.3.8 2.1.8s1.5-.3 2.1-.8c.6-.5 1-1.1 1.2-1.8.4-1.4.2-2.9-.5-4.2C12.8 2.9 11.5 2 10 2zM7.5 12c-.8 0-1.5.7-1.5 1.5S6.7 15 7.5 15s1.5-.7 1.5-1.5S8.3 12 7.5 12zm5 0c-.8 0-1.5.7-1.5 1.5s.7 1.5 1.5 1.5 1.5-.7 1.5-1.5-.7-1.5-1.5-1.5z"/></svg>
+                        <span id="streak-count">0</span>
+                    </span>
+                </div>
+                <button id="dark-mode-toggle" class="p-2 rounded-full hover:bg-blue-800 dark:hover:bg-gray-800 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                </button>
+                <button id="sound-toggle" class="p-2 rounded-full hover:bg-blue-800 dark:hover:bg-gray-800 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-6 max-w-5xl flex-grow">
+        <!-- Home Section -->
+        <div id="home" class="section bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-2xl mb-8 transform transition-all duration-500">
+            <h2 class="text-3xl font-bold text-blue-800 dark:text-blue-300 mb-6 text-center">Welcome to QuizMaster Pro</h2>
+            <p class="text-gray-600 dark:text-gray-300 text-lg text-center leading-relaxed">Embark on an exciting journey to master computer science! Test your skills in Hardware, Software, Networking, and Programming with our gamified quizzes. Earn points, unlock exclusive badges, and dominate the leaderboard!</p>
+            <div class="mt-6 flex justify-center gap-4">
+                <button onclick="showSection('exam')" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition">Start Quiz</button>
+                <button onclick="showSection('dashboard')" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transform hover:scale-105 transition">View Progress</button>
+            </div>
+        </div>
+
+        <!-- Sign-Up Section -->
+        <div id="signup" class="section bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-2xl mb-8 hidden">
+            <h2 class="text-3xl font-bold text-blue-800 dark:text-blue-300 mb-6 text-center">Join the Quest</h2>
+            <div class="flex flex-col items-center gap-5">
+                <input id="signup-name" type="text" class="border border-gray-300 dark:border-gray-500 rounded-lg p-3 w-80 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 transition" placeholder="Enter your name" required>
+                <input id="signup-email" type="email" class="border border-gray-300 dark:border-gray-500 rounded-lg p-3 w-80 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 transition" placeholder="Enter your email" required>
+                <button onclick="submitSignup()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition">Sign Up</button>
+                <p id="user-id-display" class="text-green-600 dark:text-green-400 hidden text-center"></p>
+            </div>
+        </div>
+
+        <!-- Category Selection -->
+        <div id="category-selection" class="section bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-2xl mb-8 hidden">
+            <h2 class="text-3xl font-bold text-blue-800 dark:text-blue-300 mb-8 text-center">Select Your Challenge</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                <button class="category-btn bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-4 rounded-xl hover:from-blue-700 hover:to-blue-900" onclick="checkAttempt('Hardware')">Hardware</button>
+                <button class="category-btn bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-4 rounded-xl hover:from-blue-700 hover:to-blue-900" onclick="checkAttempt('Software')">Software</button>
+                <button class="category-btn bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-4 rounded-xl hover:from-blue-700 hover:to-blue-900" onclick="checkAttempt('Networking')">Networking</button>
+                <button class="category-btn bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-4 rounded-xl hover:from-blue-700 hover:to-blue-900" onclick="checkAttempt('Programming')">Programming</button>
+            </div>
+        </div>
+
+        <!-- Warning Modal -->
+        <div id="warning-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl max-w-md w-full warning-modal">
+                <h3 class="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Warning</h3>
+                <p id="warning-message" class="mb-6 text-gray-600 dark:text-gray-300">You have already attempted this quiz. Only one attempt is allowed per User ID.</p>
+                <button onclick="closeModal()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 w-full">OK</button>
+            </div>
+        </div>
+
+        <!-- Question Count Selection Modal -->
+        <div id="question-count-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl max-w-md w-full warning-modal">
+                <h3 class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4">Select Number of Questions</h3>
+                <p class="mb-6 text-gray-600 dark:text-gray-300">How many questions would you like to practice? (Max 20)</p>
+                <div class="flex flex-wrap gap-4 justify-center">
+                    <button onclick="selectQuestionCount(5)" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition">5</button>
+                    <button onclick="selectQuestionCount(10)" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition">10</button>
+                    <button onclick="selectQuestionCount(15)" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition">15</button>
+                    <button onclick="selectQuestionCount(20)" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition">20</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Interface -->
+        <div id="quiz-interface" class="section hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-8">
+                <div id="timer" class="text-xl font-bold text-red-600 dark:text-red-400 flex items-center">
+                    <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Time Left: 15:00
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="w-32">
+                        <div class="relative pt-1">
+                            <div class="overflow-hidden h-3 mb-2 text-xs flex rounded bg-gray-200 dark:bg-gray-600">
+                                <div id="progress-bar" class="progress-bar shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center"></div>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 text-center">Progress: <span id="progress-text">0/0</span></p>
+                        </div>
+                    </div>
+                    <button id="hint-btn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transform hover:scale-105 transition" title="Use Hint (2 left)">Hint (<span id="hint-count">2</span>)</button>
+                </div>
+            </div>
+            <div id="quiz-container" class="bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-2xl fade-in"></div>
+            <div class="flex flex-wrap justify-between mt-8 gap-4">
+                <button id="prev-btn" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition">Previous</button>
+                <button id="next-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition">Next</button>
+                <button id="submit-btn" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transform hover:scale-105 transition hidden">Submit Quiz</button>
+                <button id="review-btn" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transform hover:scale-105 transition">Review Answers</button>
+            </div>
+            <div id="review-container" class="hidden bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-2xl mt-8"></div>
+            <div id="result" class="hidden text-center mt-10 text-2xl"></div>
+        </div>
+
+        <!-- About Section -->
+        <div id="about" class="section bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-2xl mb-8 hidden">
+            <h2 class="text-3xl font-bold text-blue-800 dark:text-blue-300 mb-6 text-center">About QuizMaster Pro</h2>
+            <p class="text-gray-600 dark:text-gray-300 text-lg text-center leading-relaxed">QuizMaster Pro is your ultimate destination for mastering computer science. With interactive quizzes, real-time leaderboards, and a sleek progress dashboard, we transform learning into an engaging adventure. Join our community and level up your skills today!</p>
+        </div>
+
+        <!-- Contact Section -->
+        <div id="contact" class="section bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-2xl mb-8 hidden">
+            <h2 class="text-3xl font-bold text-blue-800 dark:text-blue-300 mb-6 text-center">Get in Touch</h2>
+            <p class="text-gray-600 dark:text-gray-300 text-lg text-center leading-relaxed">Have questions or feedback? Reach out to us at <a href="mailto:support@quizmasterpro.com" class="text-blue-600 dark:text-blue-400 hover:underline">support@quizmasterpro.com</a> or call <a href="tel:+1234567890" class="text-blue-600 dark:text-blue-400 hover:underline">(123) 456-7890</a>.</p>
+        </div>
+
+        <!-- Leaderboard -->
+        <div id="leaderboard" class="bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-2xl mt-8">
+            <h2 class="text-3xl font-bold text-blue-800 dark:text-blue-300 mb-6">Leaderboard</h2>
+            <div id="leaderboard-list" class="space-y-3"></div>
+        </div>
+
+        <!-- Progress Dashboard -->
+        <div id="dashboard" class="bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-2xl mt-8">
+            <h2 class="text-3xl font-bold text-blue-800 dark:text-blue-300 mb-6">Your Progress</h2>
+            <div id="dashboard-content" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+            <div id="badges" class="mt-6">
+                <h3 class="text-xl font-bold text-blue-800 dark:text-blue-300 mb-3">Badges</h3>
+                <div id="badge-list" class="flex flex-wrap gap-3"></div>
+            </div>
+            <div id="heatmap" class="mt-6">
+                <h3 class="text-xl font-bold text-blue-800 dark:text-blue-300 mb-3">Activity Heatmap</h3>
+                <div id="heatmap-grid" class="grid grid-cols-12 gap-2"></div>
+            </div>
+            <div id="progress-chart" class="mt-6">
+                <h3 class="text-xl font-bold text-blue-800 dark:text-blue-300 mb-3">Score Trends</h3>
+                <canvas id="score-chart" class="w-full h-64"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = {
+            Hardware: [
+                {
+                    question: "What is the primary function of a CPU's cache memory?",
+                    options: ["Store permanent data", "Speed up data access", "Manage I/O operations", "Handle graphics rendering"],
+                    answer: "Speed up data access",
+                    hint: "Think about what helps the CPU access data faster than main memory."
+                },
+                {
+                    question: "Which component synchronizes the CPU with the motherboard?",
+                    options: ["Northbridge", "Southbridge", "Clock Generator", "BIOS"],
+                    answer: "Clock Generator",
+                    hint: "This component provides timing signals for the system."
+                },
+                {
+                    question: "What does ECC stand for in RAM technology?",
+                    options: ["Extended Cache Control", "Error-Correcting Code", "Enhanced Clock Cycle", "External Component Connector"],
+                    answer: "Error-Correcting Code",
+                    hint: "It’s related to detecting and fixing memory errors."
+                },
+                {
+                    question: "Which interface is commonly used for modern GPUs?",
+                    options: ["PCI", "AGP", "PCIe", "ISA"],
+                    answer: "PCIe",
+                    hint: "Look for the fastest and most modern expansion slot."
+                },
+                {
+                    question: "What is the purpose of a heatsink in a computer?",
+                    options: ["Increase CPU speed", "Dissipate heat from components", "Store temporary data", "Manage power supply"],
+                    answer: "Dissipate heat from components",
+                    hint: "It’s a cooling solution for hot components."
+                },
+                {
+                    question: "What does the term 'SATA' stand for?",
+                    options: ["Serial Advanced Technology Attachment", "Standard Access Transfer Architecture", "Systematic Array Technology Adapter", "Sequential Advanced Terminal Access"],
+                    answer: "Serial Advanced Technology Attachment",
+                    hint: "It’s a standard for connecting storage devices."
+                },
+                {
+                    question: "What is the function of the BIOS in a computer?",
+                    options: ["Manage network connections", "Initialize hardware during boot", "Run applications", "Store user data"],
+                    answer: "Initialize hardware during boot",
+                    hint: "It’s active when the computer starts up."
+                },
+                {
+                    question: "Which type of storage is typically the fastest?",
+                    options: ["HDD", "SSD", "USB Flash Drive", "Optical Disc"],
+                    answer: "SSD",
+                    hint: "It uses flash memory for speed."
+                },
+                {
+                    question: "What is the purpose of a GPU?",
+                    options: ["Process general computations", "Handle graphics rendering", "Manage memory allocation", "Control input devices"],
+                    answer: "Handle graphics rendering",
+                    hint: "It’s specialized for visual output."
+                },
+                {
+                    question: "What does RAM stand for?",
+                    options: ["Read Access Memory", "Random Access Memory", "Rapid Access Module", "Runtime Application Memory"],
+                    answer: "Random Access Memory",
+                    hint: "It’s volatile memory for temporary storage."
+                },
+                {
+                    question: "Which component manages power distribution in a PC?",
+                    options: ["Motherboard", "Power Supply Unit", "CPU", "RAM"],
+                    answer: "Power Supply Unit",
+                    hint: "It converts AC to DC for the system."
+                },
+                {
+                    question: "What is the role of the CMOS battery?",
+                    options: ["Power the CPU", "Maintain BIOS settings", "Charge peripherals", "Cool the system"],
+                    answer: "Maintain BIOS settings",
+                    hint: "It keeps settings when the computer is off."
+                },
+                {
+                    question: "Which bus connects the CPU to main memory?",
+                    options: ["Front-Side Bus", "PCI Bus", "SATA Bus", "USB Bus"],
+                    answer: "Front-Side Bus",
+                    hint: "It’s the primary data pathway to RAM."
+                },
+                {
+                    question: "What is the purpose of thermal paste?",
+                    options: ["Insulate components", "Enhance conductivity", "Improve heat transfer", "Protect against dust"],
+                    answer: "Improve heat transfer",
+                    hint: "It’s used between the CPU and heatsink."
+                },
+                {
+                    question: "What does NVMe stand for?",
+                    options: ["Non-Volatile Memory Express", "Network Virtual Machine Extension", "New Vector Memory Engine", "Non-Volatile Modular Encryption"],
+                    answer: "Non-Volatile Memory Express",
+                    hint: "It’s a protocol for fast SSDs."
+                },
+                {
+                    question: "Which component is responsible for rendering 3D graphics?",
+                    options: ["CPU", "GPU", "RAM", "Motherboard"],
+                    answer: "GPU",
+                    hint: "It’s designed for parallel processing of visuals."
+                },
+                {
+                    question: "What is the function of a RAID controller?",
+                    options: ["Manage network traffic", "Control multiple storage drives", "Optimize CPU performance", "Handle graphics output"],
+                    answer: "Control multiple storage drives",
+                    hint: "It’s used for data redundancy or performance."
+                },
+                {
+                    question: "What is the primary role of a motherboard?",
+                    options: ["Store data", "Connect all components", "Process graphics", "Manage power supply"],
+                    answer: "Connect all components",
+                    hint: "It’s the backbone of the PC."
+                },
+                {
+                    question: "Which type of memory is non-volatile?",
+                    options: ["RAM", "Cache", "ROM", "Virtual Memory"],
+                    answer: "ROM",
+                    hint: "It retains data without power."
+                },
+                {
+                    question: "What does the term 'overclocking' refer to?",
+                    options: ["Reducing CPU speed", "Increasing component speed beyond specs", "Cooling the system", "Managing memory allocation"],
+                    answer: "Increasing component speed beyond specs",
+                    hint: "It boosts performance but increases heat."
+                }
+            ],
+            Software: [
+                {
+                    question: "What is the primary function of a compiler?",
+                    options: ["Execute code directly", "Translate source code to machine code", "Debug runtime errors", "Manage memory allocation"],
+                    answer: "Translate source code to machine code",
+                    hint: "It converts human-readable code to something the CPU understands."
+                },
+                {
+                    question: "Which design pattern promotes loose coupling between objects?",
+                    options: ["Singleton", "Observer", "Factory", "Adapter"],
+                    answer: "Observer",
+                    hint: "This pattern involves notifying objects of state changes."
+                },
+                {
+                    question: "What is the purpose of a container in software development?",
+                    options: ["Manage hardware resources", "Package applications with dependencies", "Optimize database queries", "Handle network protocols"],
+                    answer: "Package applications with dependencies",
+                    hint: "Think about tools like Docker."
+                },
+                {
+                    question: "Which of these is a continuous integration tool?",
+                    options: ["Docker", "Jenkins", "Kubernetes", "Ansible"],
+                    answer: "Jenkins",
+                    hint: "It automates building and testing code."
+                },
+                {
+                    question: "What does ORM stand for in software development?",
+                    options: ["Object-Relational Mapping", "Operational Resource Management", "Optimized Runtime Module", "Object-Request Mapping"],
+                    answer: "Object-Relational Mapping",
+                    hint: "It bridges objects and databases."
+                },
+                {
+                    question: "Which software license allows free modification and distribution?",
+                    options: ["Proprietary", "MIT License", "Apache License", "GPL"],
+                    answer: "GPL",
+                    hint: "This license enforces open-source sharing."
+                },
+                {
+                    question: "What is the role of an operating system kernel?",
+                    options: ["Manage user interfaces", "Handle core system operations", "Run applications", "Store data"],
+                    answer: "Handle core system operations",
+                    hint: "It’s the heart of the OS."
+                },
+                {
+                    question: "What does API stand for?",
+                    options: ["Application Programming Interface", "Automated Process Integration", "Advanced Protocol Interpreter", "Application Process Identifier"],
+                    answer: "Application Programming Interface",
+                    hint: "It allows software to communicate."
+                },
+                {
+                    question: "Which tool is used for version control?",
+                    options: ["Git", "Docker", "Jenkins", "Nginx"],
+                    answer: "Git",
+                    hint: "It tracks code changes."
+                },
+                {
+                    question: "What is the purpose of a debugger?",
+                    options: ["Optimize code", "Find and fix code errors", "Compile code", "Manage dependencies"],
+                    answer: "Find and fix code errors",
+                    hint: "It helps identify bugs in code."
+                },
+                {
+                    question: "What is a microservice architecture?",
+                    options: ["Single large application", "Small, independent services", "Centralized database system", "Monolithic code structure"],
+                    answer: "Small, independent services",
+                    hint: "It breaks applications into smaller parts."
+                },
+                {
+                    question: "Which protocol is used by REST APIs?",
+                    options: ["FTP", "HTTP", "SMTP", "SSH"],
+                    answer: "HTTP",
+                    hint: "It’s the protocol for web communication."
+                },
+                {
+                    question: "What is the purpose of unit testing?",
+                    options: ["Test the entire system", "Test individual components", "Optimize performance", "Manage deployment"],
+                    answer: "Test individual components",
+                    hint: "It focuses on small parts of code."
+                },
+                {
+                    question: "What does CI/CD stand for?",
+                    options: ["Continuous Integration/Continuous Deployment", "Code Inspection/Code Delivery", "Continuous Iteration/Code Design", "Component Integration/Component Deployment"],
+                    answer: "Continuous Integration/Continuous Deployment",
+                    hint: "It automates development pipelines."
+                },
+                {
+                    question: "Which language is primarily used for web front-end development?",
+                    options: ["Python", "JavaScript", "Java", "C++"],
+                    answer: "JavaScript",
+                    hint: "It’s used in browsers for interactivity."
+                },
+                {
+                    question: "What is the purpose of a package manager?",
+                    options: ["Run applications", "Manage software dependencies", "Optimize code", "Debug errors"],
+                    answer: "Manage software dependencies",
+                    hint: "Think npm or pip."
+                },
+                {
+                    question: "What is middleware in software?",
+                    options: ["Hardware driver", "Software connecting components", "User interface", "Database system"],
+                    answer: "Software connecting components",
+                    hint: "It acts as a bridge in applications."
+                },
+                {
+                    question: "Which tool is used for container orchestration?",
+                    options: ["Jenkins", "Kubernetes", "Git", "Docker"],
+                    answer: "Kubernetes",
+                    hint: "It manages multiple containers."
+                },
+                {
+                    question: "What is the purpose of a load balancer?",
+                    options: ["Distribute network traffic", "Store data", "Compile code", "Debug applications"],
+                    answer: "Distribute network traffic",
+                    hint: "It ensures even workload distribution."
+                },
+                {
+                    question: "What does MVC stand for in software design?",
+                    options: ["Model-View-Controller", "Module-View-Component", "Main-View-Configuration", "Model-Variable-Controller"],
+                    answer: "Model-View-Controller",
+                    hint: "It’s a pattern for separating concerns."
+                }
+            ],
+            Networking: [
+                {
+                    question: "Which protocol ensures reliable data delivery?",
+                    options: ["UDP", "TCP", "ICMP", "ARP"],
+                    answer: "TCP",
+                    hint: "It’s known for connection-oriented communication."
+                },
+                {
+                    question: "What is the default port for HTTPS?",
+                    options: ["80", "443", "8080", "21"],
+                    answer: "443",
+                    hint: "It’s the secure version of HTTP."
+                },
+                {
+                    question: "Which device connects multiple networks using routing tables?",
+                    options: ["Switch", "Hub", "Router", "Bridge"],
+                    answer: "Router",
+                    hint: "It directs traffic between different networks."
+                },
+                {
+                    question: "What does VLAN stand for in networking?",
+                    options: ["Virtual Local Area Network", "Variable Link Access Node", "Virtual Layered Access Network", "Vector Local Address Node"],
+                    answer: "Virtual Local Area Network",
+                    hint: "It segments networks logically."
+                },
+                {
+                    question: "What is the purpose of the ARP protocol?",
+                    options: ["Resolve IP addresses to MAC addresses", "Encrypt network traffic", "Assign dynamic IP addresses", "Route packets between networks"],
+                    answer: "Resolve IP addresses to MAC addresses",
+                    hint: "It maps network to physical addresses."
+                },
+                {
+                    question: "Which OSI layer handles error detection and correction?",
+                    options: ["Physical Layer", "Data Link Layer", "Network Layer", "Transport Layer"],
+                    answer: "Data Link Layer",
+                    hint: "It’s responsible for frame-level reliability."
+                },
+                {
+                    question: "What is the purpose of a firewall?",
+                    options: ["Route traffic", "Monitor network traffic", "Block unauthorized access", "Assign IP addresses"],
+                    answer: "Block unauthorized access",
+                    hint: "It’s a security measure."
+                },
+                {
+                    question: "Which protocol is used for email transmission?",
+                    options: ["HTTP", "FTP", "SMTP", "SNMP"],
+                    answer: "SMTP",
+                    hint: "It’s for sending emails."
+                },
+                {
+                    question: "What does DNS stand for?",
+                    options: ["Domain Name System", "Dynamic Network Service", "Distributed Node System", "Data Network Standard"],
+                    answer: "Domain Name System",
+                    hint: "It translates domain names to IPs."
+                },
+                {
+                    question: "Which device operates at the Data Link Layer?",
+                    options: ["Router", "Switch", "Gateway", "Firewall"],
+                    answer: "Switch",
+                    hint: "It uses MAC addresses."
+                },
+                {
+                    question: "What is the purpose of NAT?",
+                    options: ["Encrypt data", "Translate IP addresses", "Route packets", "Assign MAC addresses"],
+                    answer: "Translate IP addresses",
+                    hint: "It maps private IPs to public ones."
+                },
+                {
+                    question: "Which protocol is used for file transfers?",
+                    options: ["HTTP", "FTP", "SMTP", "DNS"],
+                    answer: "FTP",
+                    hint: "It’s designed for transferring files."
+                },
+                {
+                    question: "What is the default port for SSH?",
+                    options: ["22", "80", "443", "21"],
+                    answer: "22",
+                    hint: "It’s used for secure remote access."
+                },
+                {
+                    question: "What is a subnet mask used for?",
+                    options: ["Encrypt data", "Divide networks", "Assign IP addresses", "Route packets"],
+                    answer: "Divide networks",
+                    hint: "It defines network and host portions."
+                },
+                {
+                    question: "Which protocol is connectionless?",
+                    options: ["TCP", "UDP", "ICMP", "HTTP"],
+                    answer: "UDP",
+                    hint: "It’s faster but less reliable."
+                },
+                {
+                    question: "What is the purpose of a gateway in networking?",
+                    options: ["Connect different networks", "Switch packets", "Assign IPs", "Monitor traffic"],
+                    answer: "Connect different networks",
+                    hint: "It bridges different protocols."
+                },
+                {
+                    question: "Which layer of the OSI model handles routing?",
+                    options: ["Physical Layer", "Data Link Layer", "Network Layer", "Application Layer"],
+                    answer: "Network Layer",
+                    hint: "It deals with IP addresses."
+                },
+                {
+                    question: "What does DHCP stand for?",
+                    options: ["Dynamic Host Configuration Protocol", "Distributed Host Control Protocol", "Dynamic Hyperlink Control Protocol", "Data Host Configuration Protocol"],
+                    answer: "Dynamic Host Configuration Protocol",
+                    hint: "It assigns IP addresses automatically."
+                },
+                {
+                    question: "What is the purpose of a VPN?",
+                    options: ["Increase network speed", "Secure remote connections", "Assign IP addresses", "Monitor traffic"],
+                    answer: "Secure remote connections",
+                    hint: "It encrypts network traffic."
+                },
+                {
+                    question: "Which protocol is used for network management?",
+                    options: ["SNMP", "FTP", "HTTP", "SMTP"],
+                    answer: "SNMP",
+                    hint: "It monitors network devices."
+                }
+            ],
+            Programming: [
+                {
+                    question: "What is the space complexity of a depth-first search algorithm?",
+                    options: ["O(1)", "O(n)", "O(log n)", "O(n²)"],
+                    answer: "O(n)",
+                    hint: "Consider the recursion stack."
+                },
+                {
+                    question: "Which programming concept avoids side effects?",
+                    options: ["Imperative Programming", "Functional Programming", "Object-Oriented Programming", "Procedural Programming"],
+                    answer: "Functional Programming",
+                    hint: "It emphasizes pure functions."
+                },
+                {
+                    question: "What is a promise in JavaScript?",
+                    options: ["A synchronous function call", "An object representing asynchronous operation", "A type of loop", "A method for error handling"],
+                    answer: "An object representing asynchronous operation",
+                    hint: "It’s used for async tasks like fetching data."
+                },
+                {
+                    question: "Which data structure is best for implementing a priority queue?",
+                    options: ["Array", "Linked List", "Heap", "Stack"],
+                    answer: "Heap",
+                    hint: "It efficiently handles priority ordering."
+                },
+                {
+                    question: "What does the term 'duck typing' refer to?",
+                    options: ["Static type checking", "Dynamic type checking based on behavior", "Type conversion", "Type inheritance"],
+                    answer: "Dynamic type checking based on behavior",
+                    hint: "It’s about ‘if it quacks like a duck’."
+                },
+                {
+                    question: "What is the purpose of a linter in programming?",
+                    options: ["Optimize code execution", "Analyze code for errors and style", "Compile code to machine language", "Manage dependencies"],
+                    answer: "Analyze code for errors and style",
+                    hint: "It enforces coding standards."
+                },
+                {
+                    question: "What is the time complexity of binary search?",
+                    options: ["O(n)", "O(log n)", "O(n²)", "O(1)"],
+                    answer: "O(log n)",
+                    hint: "It divides the search space in half."
+                },
+                {
+                    question: "Which keyword in Python defines a function?",
+                    options: ["function", "def", "lambda", "proc"],
+                    answer: "def",
+                    hint: "It’s used to declare functions."
+                },
+                {
+                    question: "What is recursion in programming?",
+                    options: ["Looping through arrays", "A function calling itself", "Parallel processing", "Memory allocation"],
+                    answer: "A function calling itself",
+                    hint: "It solves problems by breaking them down."
+                },
+                {
+                    question: "What does the 'this' keyword refer to in JavaScript?",
+                    options: ["Global object", "Current object", "Parent object", "Function scope"],
+                    answer: "Current object",
+                    hint: "It refers to the object it’s called on."
+                },
+                {
+                    question: "What is the purpose of a hash table?",
+                    options: ["Sort data", "Store key-value pairs", "Manage memory", "Optimize loops"],
+                    answer: "Store key-value pairs",
+                    hint: "It uses keys for fast lookup."
+                },
+                {
+                    question: "Which sorting algorithm has the best average-case time complexity?",
+                    options: ["Bubble Sort", "Quick Sort", "Selection Sort", "Insertion Sort"],
+                    answer: "Quick Sort",
+                    hint: "It uses divide-and-conquer."
+                },
+                {
+                    question: "What is a closure in programming?",
+                    options: ["A loop structure", "A function with preserved data", "A type of variable", "A sorting algorithm"],
+                    answer: "A function with preserved data",
+                    hint: "It retains access to its scope."
+                },
+                {
+                    question: "What does the term 'polymorphism' mean in OOP?",
+                    options: ["Code reuse", "Multiple forms of a method", "Data encapsulation", "Single inheritance"],
+                    answer: "Multiple forms of a method",
+                    hint: "It allows methods to be overridden."
+                },
+                {
+                    question: "Which language is known for its use in data science?",
+                    options: ["Java", "Python", "C++", "Ruby"],
+                    answer: "Python",
+                    hint: "It has libraries like Pandas and NumPy."
+                },
+                {
+                    question: "What is the purpose of the 'final' keyword in Java?",
+                    options: ["Define a loop", "Prevent modification", "Create an object", "Import modules"],
+                    answer: "Prevent modification",
+                    hint: "It makes variables or methods immutable."
+                },
+                {
+                    question: "What is a lambda function?",
+                    options: ["A named function", "An anonymous function", "A recursive function", "A class method"],
+                    answer: "An anonymous function",
+                    hint: "It’s a small, unnamed function."
+                },
+                {
+                    question: "Which data structure follows the LIFO principle?",
+                    options: ["Queue", "Stack", "Heap", "Tree"],
+                    answer: "Stack",
+                    hint: "Last In, First Out."
+                },
+                {
+                    question: "What is the purpose of a try-catch block?",
+                    options: ["Loop through data", "Handle exceptions", "Define functions", "Optimize code"],
+                    answer: "Handle exceptions",
+                    hint: "It manages runtime errors."
+                },
+                {
+                    question: "What does the term 'refactoring' mean?",
+                    options: ["Writing new code", "Improving code without changing behavior", "Debugging errors", "Compiling code"],
+                    answer: "Improving code without changing behavior",
+                    hint: "It enhances code quality."
+                }
+            ]
+        };
+
+        let currentCategory = null;
+        let currentQuestion = 0;
+        let timeLeft = 15 * 60;
+        let timerInterval;
+        let userId = localStorage.getItem('userId') || null;
+        let userName = localStorage.getItem('userName') || null;
+        let attempts = JSON.parse(localStorage.getItem('attempts')) || {};
+        let answers = JSON.parse(localStorage.getItem('quizAnswers')) || {};
+        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+        let badges = JSON.parse(localStorage.getItem('badges')) || {};
+        let points = parseInt(localStorage.getItem('points')) || 0;
+        let streak = parseInt(localStorage.getItem('streak')) || 0;
+        let lastQuizDate = localStorage.getItem('lastQuizDate') || null;
+        let randomizedQuestions = [];
+        let hintCount = 2;
+        let soundEnabled = true;
+        let selectedQuestionCount = null;
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(frequency, duration, type = 'sine') {
+            if (!soundEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.currentTime);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function generateUserId() {
+            return 'UID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        }
+
+        function updateStreak() {
+            const today = new Date().toISOString().split('T')[0];
+            if (lastQuizDate) {
+                const lastDate = new Date(lastQuizDate);
+                const currentDate = new Date(today);
+                const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+                if (diffDays === 1) {
+                    streak++;
+                } else if (diffDays > 1) {
+                    streak = 1;
+                }
+            } else {
+                streak = 1;
+            }
+            localStorage.setItem('streak', streak);
+            localStorage.setItem('lastQuizDate', today);
+            const streakDisplay = document.getElementById('streak-display');
+            streakDisplay.classList.toggle('hidden', streak === 0);
+            document.getElementById('streak-count').textContent = streak;
+            if (streak >= 3 && !badges[userId]?.includes('StreakMaster')) {
+                badges[userId] = badges[userId] || [];
+                badges[userId].push('StreakMaster');
+                points += 50;
+                localStorage.setItem('badges', JSON.stringify(badges));
+                localStorage.setItem('points', points);
+            }
+        }
+
+        function submitSignup() {
+            const name = document.getElementById('signup-name').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            if (name && email) {
+                userId = generateUserId();
+                userName = name;
+                localStorage.setItem('userId', userId);
+                localStorage.setItem('userName', userName);
+                attempts[userId] = attempts[userId] || {};
+                badges[userId] = badges[userId] || [];
+                localStorage.setItem('attempts', JSON.stringify(attempts));
+                localStorage.setItem('badges', JSON.stringify(badges));
+                document.getElementById('user-id-display').textContent = `Your User ID: ${userId} (Save this ID!)`;
+                document.getElementById('user-id-display').classList.remove('hidden');
+                updateUserProfile();
+                setTimeout(() => {
+                    showSection('home');
+                    updateDashboard();
+                    playSound(440, 0.3);
+                    confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+                }, 2000);
+            } else {
+                alert("Please enter both name and email.");
+            }
+        }
+
+        function updateUserProfile() {
+            const profile = document.getElementById('user-profile');
+            if (userId && userName) {
+                profile.classList.remove('hidden');
+                profile.innerHTML = `
+                    <span class="mr-4 font-semibold">${userName} (${userId}) - ${points} pts</span>
+                    <span id="streak-display" class="text-yellow-400 flex items-center gap-1 ${streak === 0 ? 'hidden' : ''}">
+                        <svg class="w-5 h-5 streak-flame" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2c-1.5 0-2.8.9-3.5 2.2-.7 1.3-.9 2.8-.5 4.2.2.7.6 1.3 1.2 1.8.6.5 1.3.8 2.1.8s1.5-.3 2.1-.8c.6-.5 1-1.1 1.2-1.8.4-1.4.2-2.9-.5-4.2C12.8 2.9 11.5 2 10 2zM7.5 12c-.8 0-1.5.7-1.5 1.5S6.7 15 7.5 15s1.5-.7 1.5-1.5S8.3 12 7.5 12zm5 0c-.8 0-1.5.7-1.5 1.5s.7 1.5 1.5 1.5 1.5-.7 1.5-1.5-.7-1.5-1.5-1.5z"/></svg>
+                        <span id="streak-count">${streak}</span>
+                    </span>
+                    <button onclick="logout()" class="text-red-400 hover:text-red-300 ml-4">Logout</button>
+                `;
+            } else {
+                profile.classList.add('hidden');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('quizAnswers');
+            localStorage.removeItem('streak');
+            localStorage.removeItem('lastQuizDate');
+            userId = null;
+            userName = null;
+            streak = 0;
+            answers = {};
+            showSection('signup');
+            updateUserProfile();
+            updateDashboard();
+            playSound(220, 0.3, 'triangle');
+        }
+
+        function checkAttempt(category) {
+            if (!userId) {
+                showSection('signup');
+                playSound(880, 0.3, 'square');
+                return;
+            }
+            if (attempts[userId] && attempts[userId][category]) {
+                document.getElementById('warning-message').textContent = `You have already attempted the ${category} quiz. Only one attempt is allowed per User ID.`;
+                document.getElementById('warning-modal').classList.remove('hidden');
+                playSound(880, 0.3, 'square');
+            } else {
+                showQuestionCountModal(category);
+            }
+        }
+
+        function showQuestionCountModal(category) {
+            currentCategory = category;
+            document.getElementById('question-count-modal').classList.remove('hidden');
+            playSound(440, 0.3);
+        }
+
+        function selectQuestionCount(count) {
+            selectedQuestionCount = count;
+            document.getElementById('question-count-modal').classList.add('hidden');
+            startQuiz(currentCategory);
+            playSound(550, 0.2);
+        }
+
+        function closeModal() {
+            document.getElementById('warning-modal').classList.add('hidden');
+            document.getElementById('question-count-modal').classList.add('hidden');
+            playSound(550, 0.2);
+        }
+
+        function showSection(section) {
+            const sections = ['home', 'signup', 'category-selection', 'quiz-interface', 'about', 'contact', 'dashboard'];
+            sections.forEach(s => document.getElementById(s).classList.add('hidden'));
+            if (section === 'exam') {
+                if (!userId) {
+                    document.getElementById('signup').classList.remove('hidden');
+                } else {
+                    document.getElementById('category-selection').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById(section).classList.remove('hidden');
+            }
+            document.getElementById('leaderboard').classList.toggle('hidden', section === 'quiz-interface');
+            document.getElementById('dashboard').classList.toggle('hidden', section === 'quiz-interface');
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.querySelector(`a[href="#${section}"]`)?.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function startQuiz(category) {
+            currentCategory = category;
+            currentQuestion = 0;
+            if (selectedQuestionCount === 5) timeLeft = 5 * 60;
+            else if (selectedQuestionCount === 10) timeLeft = 10 * 60;
+            else if (selectedQuestionCount === 15) timeLeft = 15 * 60;
+            else if (selectedQuestionCount === 20) timeLeft = 20 * 60;
+            hintCount = 2;
+            answers[category] = answers[category] || new Array(selectedQuestionCount).fill(null);
+            randomizedQuestions = shuffleArray([...quizData[category]]).slice(0, selectedQuestionCount);
+            localStorage.setItem('quizAnswers', JSON.stringify(answers));
+            attempts[userId] = attempts[userId] || {};
+            attempts[userId][category] = true;
+            localStorage.setItem('attempts', JSON.stringify(attempts));
+            document.getElementById('category-selection').classList.add('hidden');
+            document.getElementById('quiz-interface').classList.remove('hidden');
+            document.getElementById('hint-count').textContent = hintCount;
+            loadQuestion();
+            startTimer();
+            playSound(440, 0.3);
+            updateStreak();
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                document.getElementById('timer').textContent = `Time Left: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                timeLeft--;
+                if (timeLeft <= 10 && timeLeft > 0) playSound(880, 0.1, 'square');
+                if (timeLeft < 0) {
+                    clearInterval(timerInterval);
+                    submitQuiz();
+                }
+            }, 1000);
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / randomizedQuestions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('progress-text').textContent = `${currentQuestion + 1}/${randomizedQuestions.length}`;
+        }
+
+        function loadQuestion() {
+            const quizContainer = document.getElementById('quiz-container');
+            const question = randomizedQuestions[currentQuestion];
+            quizContainer.innerHTML = `
+                <h3 class="text-2xl font-bold text-blue-700 dark:text-blue-300 mb-8">${currentQuestion + 1}. ${question.question}</h3>
+                <div class="space-y-4">
+                    ${question.options.map((option, index) => `
+                        <label class="option-label block p-5 bg-gray-50 dark:bg-gray-700 rounded-xl cursor-pointer transition-all ${answers[currentCategory][currentQuestion] === option ? 'selected' : ''}">
+                            <input type="radio" name="q${currentQuestion}" value="${option}" class="mr-3 focus:ring-blue-500" 
+                            ${answers[currentCategory][currentQuestion] === option ? 'checked' : ''}>
+                            <span class="text-lg">${option}</span>
+                        </label>
+                    `).join('')}
+                </div>
+                <p id="hint-text" class="text-sm text-gray-500 dark:text-gray-400 mt-6 hidden"></p>
+            `;
+            document.getElementById('prev-btn').disabled = currentQuestion === 0;
+            document.getElementById('next-btn').classList.toggle('hidden', currentQuestion === randomizedQuestions.length - 1);
+            document.getElementById('submit-btn').classList.toggle('hidden', currentQuestion !== randomizedQuestions.length - 1);
+            document.getElementById('hint-btn').disabled = hintCount === 0;
+            updateProgress();
+
+            document.querySelectorAll(`input[name="q${currentQuestion}"]`).forEach(input => {
+                input.addEventListener('change', (e) => {
+                    answers[currentCategory][currentQuestion] = e.target.value;
+                    localStorage.setItem('quizAnswers', JSON.stringify(answers));
+                    document.querySelectorAll('.option-label').forEach(label => label.classList.remove('selected'));
+                    e.target.parentElement.classList.add('selected');
+                    playSound(660, 0.2);
+                });
+            });
+        }
+
+        function showHint() {
+            if (hintCount > 0) {
+                hintCount--;
+                document.getElementById('hint-count').textContent = hintCount;
+                document.getElementById('hint-btn').disabled = hintCount === 0;
+                document.getElementById('hint-text').textContent = `Hint: ${randomizedQuestions[currentQuestion].hint}`;
+                document.getElementById('hint-text').classList.remove('hidden');
+                playSound(550, 0.2);
+            }
+        }
+
+        function showReview() {
+            const reviewContainer = document.getElementById('review-container');
+            reviewContainer.classList.remove('hidden');
+            reviewContainer.innerHTML = `
+                <h3 class="text-2xl font-bold text-blue-700 dark:text-blue-300 mb-8">Review Your Answers</h3>
+                <div class="space-y-5">
+                    ${randomizedQuestions.map((q, index) => `
+                        <div class="p-5 bg-gray-50 dark:bg-gray-700 rounded-xl transition-all">
+                            <p class="font-semibold text-lg">${index + 1}. ${q.question}</p>
+                            <p class="text-sm ${answers[currentCategory][index] === q.answer ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+                                Your Answer: ${answers[currentCategory][index] || 'Not answered'} 
+                                ${answers[currentCategory][index] !== q.answer ? `(Correct: ${q.answer})` : ''}
+                            </p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function awardBadges(score) {
+            badges[userId] = badges[userId] || [];
+            if (score >= Math.ceil(selectedQuestionCount * 0.8) && !badges[userId].includes('HighScorer')) {
+                badges[userId].push('HighScorer');
+                points += 50;
+            }
+            const completedCategories = Object.keys(attempts[userId] || {}).length;
+            if (completedCategories === 4 && !badges[userId].includes('Master')) {
+                badges[userId].push('Master');
+                points += 100;
+            }
+            localStorage.setItem('badges', JSON.stringify(badges));
+            localStorage.setItem('points', points);
+            updateDashboard();
+        }
+
+        function updateLeaderboard(score) {
+            leaderboard.push({ name: userName, category: currentCategory, score, date: new Date().toLocaleString() });
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 5);
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            displayLeaderboard();
+        }
+
+        function displayLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            leaderboardList.innerHTML = leaderboard.length ? `
+                ${leaderboard.map((entry, index) => `
+                    <div class="flex justify-between items-center p-4 ${index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'} rounded-xl transform hover:scale-102 transition">
+                        <span class="flex items-center gap-2">
+                            <span class="text-yellow-400">${index + 1}.</span>
+                            ${entry.name} (${entry.category})
+                        </span>
+                        <span>Score: ${entry.score} - ${entry.date}</span>
+                    </div>
+                `).join('')}
+            ` : '<p class="text-gray-500 dark:text-gray-400 text-center">No leaderboard entries yet.</p>';
+        }
+
+        function updateDashboard() {
+            const dashboardContent = document.getElementById('dashboard-content');
+            const categories = Object.keys(quizData);
+            dashboardContent.innerHTML = categories.map(category => `
+                <div class="dashboard-card bg-gray-50 dark:bg-gray-700 p-6 rounded-xl shadow-lg">
+                    <h3 class="font-bold text-xl text-blue-700 dark:text-blue-300">${category}</h3>
+                    <p class="text-sm mt-2">Completed: ${attempts[userId] && attempts[userId][category] ? 'Yes' : 'No'}</p>
+                    <p class="text-sm">Answers Saved: ${answers[category] ? answers[category].filter(a => a !== null).length : 0}/${quizData[category].length}</p>
+                    <div class="mt-3 h-2 bg-gray-200 dark:bg-gray-600 rounded">
+                        <div class="h-full bg-gradient-to-r from-green-400 to-green-600 rounded" style="width: ${(answers[category] ? answers[category].filter(a => a !== null).length / quizData[category].length * 100 : 0)}%"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            const badgeList = document.getElementById('badge-list');
+            badgeList.innerHTML = badges[userId]?.length ? badges[userId].map(badge => `
+                <span class="badge bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-3 py-1 rounded-full text-sm">${badge}</span>
+            `).join('') : '<p class="text-gray-500 dark:text-gray-400">No badges earned yet.</p>';
+
+            const heatmapGrid = document.getElementById('heatmap-grid');
+            heatmapGrid.innerHTML = '';
+            const today = new Date();
+            for (let i = 11; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                const activity = leaderboard.some(entry => entry.name === userName && entry.date.includes(dateStr));
+                heatmapGrid.innerHTML += `
+                    <div class="w-8 h-8 rounded ${activity ? 'bg-gradient-to-br from-green-400 to-green-600' : 'bg-gray-200 dark:bg-gray-600'} transform hover:scale-110 transition" title="${dateStr}"></div>
+                `;
+            }
+
+            const ctx = document.getElementById('score-chart').getContext('2d');
+            const scores = categories.map(category => {
+                if (attempts[userId]?.[category]) {
+                    return answers[category]?.reduce((sum, ans, idx) => sum + (ans === quizData[category][idx].answer ? 1 : 0), 0) || 0;
+                }
+                return 0;
+            });
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        label: 'Scores',
+                        data: scores,
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true, max: 20, title: { display: true, text: 'Score' } },
+                        x: { title: { display: true, text: 'Category' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function submitQuiz() {
+            clearInterval(timerInterval);
+            let score = 0;
+            randomizedQuestions.forEach((q, index) => {
+                if (answers[currentCategory][index] === q.answer) score++;
+            });
+            points += score * 10;
+            const resultDiv = document.getElementById('result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = `
+                <p class="font-bold text-3xl text-green-600 dark:text-green-400 mb-4">Your Score: ${score} out of ${randomizedQuestions.length}</p>
+                <p class="mb-6 text-lg">${score >= Math.ceil(randomizedQuestions.length * 0.8) ? 'Outstanding performance! 🚀' : score >= Math.ceil(randomizedQuestions.length * 0.5) ? 'Great effort! Keep it up! 💪' : 'Keep practicing to improve! 📚'}</p>
+                <p class="text-sm mb-6">Earned ${score * 10} points! Total: ${points} points</p>
+                <button onclick="restartQuiz()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition">Try Another Category</button>
+            `;
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('prev-btn').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('submit-btn').classList.add('hidden');
+            document.getElementById('review-btn').classList.add('hidden');
+            document.getElementById('leaderboard').classList.remove('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            showReview();
+            updateLeaderboard(score);
+            awardBadges(score);
+            localStorage.setItem('points', points);
+            localStorage.removeItem('quizAnswers');
+            playSound(220, 0.5, 'triangle');
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#3b82f6', '#60a5fa', '#93c5fd'] });
+        }
+
+        function restartQuiz() {
+            answers = {};
+            localStorage.setItem('quizAnswers', JSON.stringify(answers));
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('review-container').classList.add('hidden');
+            document.getElementById('quiz-interface').classList.add('hidden');
+            document.getElementById('category-selection').classList.remove('hidden');
+            document.getElementById('leaderboard').classList.remove('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            displayLeaderboard();
+            updateDashboard();
+        }
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentQuestion < randomizedQuestions.length - 1) {
+                currentQuestion++;
+                document.getElementById('hint-text').classList.add('hidden');
+                loadQuestion();
+            }
+        });
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                document.getElementById('hint-text').classList.add('hidden');
+                loadQuestion();
+            }
+        });
+
+        document.getElementById('submit-btn').addEventListener('click', submitQuiz);
+
+        document.getElementById('review-btn').addEventListener('click', showReview);
+
+        document.getElementById('hint-btn').addEventListener('click', showHint);
+
+        document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark') ? 'true' : 'false');
+            playSound(550, 0.2);
+        });
+
+        document.getElementById('sound-toggle').addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-toggle').innerHTML = soundEnabled ?
+                `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>` :
+                `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM16 12h4m-4-4h4m-4 8h4" /></svg>`;
+            playSound(550, 0.2);
+        });
+
+        // Initialize Particles.js
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 100, density: { enable: true, value_area: 1000 } },
+                color: { value: ['#60a5fa', '#93c5fd', '#3b82f6'] },
+                shape: { type: 'circle', stroke: { width: 0 } },
+                opacity: { value: 0.6, random: true, anim: { enable: true, speed: 1, opacity_min: 0.2 } },
+                size: { value: 4, random: true, anim: { enable: true, speed: 2, size_min: 1 } },
+                line_linked: { enable: true, distance: 120, color: '#93c5fd', opacity: 0.3, width: 1.5 },
+                move: { enable: true, speed: 3, direction: 'none', random: true, straight: false, out_mode: 'out', bounce: false }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: { grab: { distance: 140, line_linked: { opacity: 0.5 } }, push: { particles_nb: 5 } }
+            },
+            retina_detect: true
+        });
+
+        // Initialize Dark Mode
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Initialize
+        if (userId) {
+            showSection('home');
+            updateUserProfile();
+        } else {
+            showSection('signup');
+        }
+        displayLeaderboard();
+        updateDashboard();
+    </script>
+</body>
+</html>
